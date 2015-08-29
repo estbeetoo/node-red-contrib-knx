@@ -1,0 +1,150 @@
+<!--
+
+  KNX nodes for IBM's Node-Red
+  https://github.com/estbeetoo/node-red-contrib-knx.git
+  (c) 2015, Alexander Borovsky <aborovsky@beetoo.me>
+
+  One may find full license text here: https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
+
+  You are free to:
+
+  Share - copy and redistribute the material in any medium or format
+  Adapt - remix, transform, and build upon the material
+  The licensor cannot revoke these freedoms as long as you follow the license terms.
+
+  Under the following terms:
+
+  Attribution - You must give appropriate credit, provide a link to the license, and indicate if changes were made. You may do so in any reasonable manner, but not in any way that suggests the licensor endorses you or your use.
+  NonCommercial - You may not use the material for commercial purposes.
+  ShareAlike - If you remix, transform, or build upon the material, you must distribute your contributions under the same license as the original.
+  No additional restrictions - You may not apply legal terms or technological measures that legally restrict others from doing anything the license permits.
+
+  Notices:
+
+  You do not have to comply with the license for elements of the material in the public domain or where your use is permitted by an applicable exception or limitation.
+  No warranties are given. The license may not give you all of the permissions necessary for your intended use. For example, other rights such as publicity, privacy, or moral rights may limit how you use the material.
+-->
+<script type="text/x-red" data-template-name="knx-controller">
+    <div class="form-row">
+        <label for="node-config-input-host"><i class="icon-bookmark"></i> knx Host</label>
+        <input type="text" id="node-config-input-host">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-port"><i class="icon-bookmark"></i> knx Port</label>
+        <input type="text" id="node-config-input-port">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-mode"><i class="icon-bookmark"></i> knx Mode</label>
+        <select id="node-config-input-mode">
+            <option value="tunnel/unicast">tunnel/unicast</option>
+            <option value="routing/multicast">routing/multicast</option>
+        </select>
+    </div>
+</script>
+
+<script type="text/x-red" data-template-name="knx-out">
+    <div class="form-row">
+        <label for="node-input-name"><i class="icon-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    	<div class="form-row">
+        <label for="node-input-controller"><i class="icon-bookmark"></i> Controller</label>
+        <input type="text" id="node-input-controller">
+    </div>
+
+
+</script>
+
+<script type="text/x-red" data-template-name="knx-in">
+    <div class="form-row">
+        <label for="node-input-name"><i class="icon-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    	<div class="form-row">
+        <label for="node-input-controller"><i class="icon-bookmark"></i> Controller</label>
+        <input type="text" id="node-input-controller">
+    </div>
+
+
+</script>
+
+<script type="text/x-red" data-help-name="knx-out">
+    <p>Use this to <b>send</b> telegrams via an knx daemon connected to a KNX/EIB network.<br/>
+    	<b>msg.topic</b> can be:
+    	<p> - 'read': to send a read request to the bus</p>
+    	<p> - respond': to send a response to another read request to the bus</p>
+    	<p> - 'write': (<b>default</b>) to write a value to the bus. Can be omitted.</p>
+    	<br/>
+    	<b>msg.payload</b> must be a JavaScript object or a string in JSON format
+    	<p> - dstgad: the destination <b>group</b> address (eg."1/2/3")</p>
+    	<p> - value: the actual value to send (eg."1")</p>
+    	<p> - dpt: the datapoint type (eg."1")</p>
+	for example: {"dstgad":"1/2/3", "value":"1", "dpt":"1"}
+    </p>
+
+
+</script>
+
+<script type="text/x-red" data-help-name="knx-in">
+    <p>Use this to <b>inject</b> flows from KNX telegrams on the bus<br/>
+   	<b>msg.topic</b> will be: 
+    	<p> - 'read': when a read request arrives on the bus</p>
+    	<p> - 'respond': when another KNX device responds to a read request on the bus</p>
+    	<p> - 'write': when somebody writes a value to a KNX group address.</p>
+    	<br/>
+    	<b>msg.payload</b> will have the format: {width: X, value: Y}
+    	<p> - srcphy: source <b>physical</b> address (eg.'1.1.100')</p>
+    	<p> - dstgad: destination <b>group</b> address (eg.'1/2/3')</p>
+    	<p> - value: the actual value received</p>
+    	<p> - dpt: the datapoint type <b>bits</b> of the telegram</p>
+    </p>
+
+</script>
+
+<script type="text/javascript">
+    RED.nodes.registerType('knx-controller', {
+        category: 'config',
+        defaults: {
+            host: {value: "127.0.0.1", required: true},
+            port: {value: 3761, required: true, validate: RED.validators.number()},
+            mode: {value: "tunnel/unicast", required: true}
+        },
+        label: function () {
+            return "knx@" + this.host + ":" + this.port;
+        }
+    });
+</script>
+
+<script type="text/javascript">
+    RED.nodes.registerType('knx-out', {
+        category: 'output',
+        color: '#26b050',
+        defaults: {
+            name: {value: ""},
+            controller: {value: "", type: "knx-controller"}
+        },
+        inputs: 1,
+        outputs: 0,
+        icon: "knx.png",
+        label: function () {
+            return (this.groupaddr || this.name || "knx");
+        }
+    });
+</script>
+
+<script type="text/javascript">
+    RED.nodes.registerType('knx-in', {
+        category: 'input',
+        color: '#26b050',
+        defaults: {
+            name: {value: ""},
+            controller: {value: "", type: "knx-controller"}
+        },
+        inputs: 0,
+        outputs: 1,
+        icon: "knx.png",
+        label: function () {
+            return (this.groupaddr || this.name || "knx");
+        }
+    });
+</script>

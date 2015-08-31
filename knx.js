@@ -222,7 +222,7 @@ module.exports = function (RED) {
         log('new KNX-IN, config: %j', config);
         RED.nodes.createNode(this, config);
         this.name = config.name;
-        this.inconn = null;
+        this.connection = null;
         var node = this;
         var knxjsController = RED.nodes.getNode(config.controller);
         /* ===== Node-Red events ===== */
@@ -230,41 +230,50 @@ module.exports = function (RED) {
             if (msg != null) {
 
             }
-            ;
         });
+        var that = this;
         this.on("close", function () {
-            log('knxjsIn.close');
-            if (this.inconn) {
-                log('closing knxjsIn connection');
-                this.inconn.end();
-            }
+            if (that.receiveEvent && that.connection)
+                that.connection.off('event', that.receiveEvent);
+            if (that.receiveStatus && that.connection)
+                that.connection.off('status', that.receiveStatus);
         });
 //		this.on("error", function(msg) {});
 
         /* ===== knxjs events ===== */
         // initialize incoming KNX event socket (openGroupSocket)
         // there's only one connection for knxjs-in:
-        knxjsController.initializeKnxConnection(function (conn) {
-            this.inconn = conn;
-            this.inconn.openGroupSocket(0, function (parser) {
-                parser.on('write', function (src, dest, dpt, val) {
-                    log('Write from ' + src + ' to ' + dest + ': ' + val);
-                    node.send({
-                        topic: 'knx: write',
-                        payload: {'srcphy': src, 'dstgad': dest, 'dpt': dpt, 'value': val}
-                    });
+        knxjsController.initializeKnxConnection(function (connection) {
+
+            that.receiveEvent = function (gad, data, datagram) {
+                log('knx event gad[' + gad + ']data[' + data.toString('hex') + ']');
+                node.send({
+                    topic: 'knx:event',
+                    payload: {
+                        'srcphy': datagram.source_address,
+                        'dstgad': gad,
+                        'dpt': 'no_dpt',
+                        'value': data.toString(),
+                        'type': 'event'
+                    }
                 });
-                //
-                parser.on('response', function (src, dest, val) {
-                    log('Response from %s to %s: %s', src, dest, val);
-                    node.send({topic: 'knx: response', payload: {'srcphy': src, 'dstgad': dest, 'value': val}});
+            };
+            that.receiveStatus = function (gad, data, datagram) {
+                log('knx status gad[' + gad + ']data[' + data.toString('hex') + ']');
+                node.send({
+                    topic: 'knx:status',
+                    payload: {
+                        'srcphy': datagram.source_address,
+                        'dstgad': gad,
+                        'dpt': 'no_dpt',
+                        'value': data.toString(),
+                        'type': 'status'
+                    }
                 });
-                //
-                parser.on('read', function (src, dest) {
-                    log('Read from %s to %s', src, dest);
-                    node.send({topic: 'knx: read', payload: {'srcphy': src, 'dstgad': dest}});
-                });
-            });
+            };
+            that.connection = connection;
+            that.connection.on('event', that.receiveEvent);
+            that.connection.on('status', that.receiveStatus);
         });
     }
 

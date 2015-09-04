@@ -68,7 +68,7 @@ module.exports = function (RED) {
             return node.knxjsconn;
         };
         this.on("close", function () {
-            log('disconnecting from knxjs server at %s:%d in mode[%s]', [config.host, config.port, config.mode]);
+            log('disconnecting from knxjs server at ' + config.host + ':' + config.port + ' in mode[' + config.mode + ']');
             node.knxjsconn && node.knxjsconn.Disconnect && node.knxjsconn.Disconnect();
         });
     }
@@ -234,9 +234,9 @@ module.exports = function (RED) {
         var that = this;
         this.on("close", function () {
             if (that.receiveEvent && that.connection)
-                that.connection.off('event', that.receiveEvent);
+                that.connection.removeListener('event', that.receiveEvent);
             if (that.receiveStatus && that.connection)
-                that.connection.off('status', that.receiveStatus);
+                that.connection.removeListener('status', that.receiveStatus);
         });
 //		this.on("error", function(msg) {});
 

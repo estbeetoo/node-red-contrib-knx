@@ -123,6 +123,8 @@ module.exports = function (RED) {
             log('knxOut.close');
         });
 
+        node.status({fill: "yellow", shape: "dot", text: "inactive"});
+
         /**
          * send a group write telegram to a group address
          * Initializes new knxjs connection per request
@@ -196,6 +198,21 @@ module.exports = function (RED) {
             // init a new one-off connection from the effectively singleton KnxController
             // there seems to be no way to reuse the outgoing conn in adreek/node-knxjs
             this.ctrl.initializeKnxConnection(function (connection) {
+
+                if (connection.connected)
+                    node.status({fill: "green", shape: "dot", text: "connected"});
+                else
+                    node.status({fill: "red", shape: "dot", text: "disconnected"});
+                connection.on('connecting', function () {
+                    node.status({fill: "yellow", shape: "dot", text: "connecting"});
+                });
+                connection.on('connected', function () {
+                    node.status({fill: "green", shape: "dot", text: "connected"});
+                });
+                connection.on('disconnected', function () {
+                    node.status({fill: "red", shape: "dot", text: "disconnected"});
+                });
+
                 try {
                     log("sendAPDU: %j", JSON.stringify(value));
                     connection.Action(dstgad.toString(), value, dpt);
@@ -231,12 +248,12 @@ module.exports = function (RED) {
 
             }
         });
-        var that = this;
+        var node = this;
         this.on("close", function () {
-            if (that.receiveEvent && that.connection)
-                that.connection.removeListener('event', that.receiveEvent);
-            if (that.receiveStatus && that.connection)
-                that.connection.removeListener('status', that.receiveStatus);
+            if (node.receiveEvent && node.connection)
+                node.connection.removeListener('event', node.receiveEvent);
+            if (node.receiveStatus && node.connection)
+                node.connection.removeListener('status', node.receiveStatus);
         });
 //		this.on("error", function(msg) {});
 
@@ -245,7 +262,7 @@ module.exports = function (RED) {
         // there's only one connection for knxjs-in:
         knxjsController.initializeKnxConnection(function (connection) {
 
-            that.receiveEvent = function (gad, data, datagram) {
+            node.receiveEvent = function (gad, data, datagram) {
                 log('knx event gad[' + gad + ']data[' + data.toString('hex') + ']');
                 node.send({
                     topic: 'knx:event',
@@ -258,7 +275,7 @@ module.exports = function (RED) {
                     }
                 });
             };
-            that.receiveStatus = function (gad, data, datagram) {
+            node.receiveStatus = function (gad, data, datagram) {
                 log('knx status gad[' + gad + ']data[' + data.toString('hex') + ']');
                 node.send({
                     topic: 'knx:status',
@@ -271,9 +288,24 @@ module.exports = function (RED) {
                     }
                 });
             };
-            that.connection = connection;
-            that.connection.on('event', that.receiveEvent);
-            that.connection.on('status', that.receiveStatus);
+            node.connection = connection;
+            node.connection.on('event', node.receiveEvent);
+            node.connection.on('status', node.receiveStatus);
+
+            node.status({fill: "yellow", shape: "dot", text: "connecting"});
+            if (node.connection.connected)
+                node.status({fill: "green", shape: "dot", text: "connected"});
+            else
+                node.status({fill: "red", shape: "dot", text: "disconnected"});
+            node.connection.on('connecting', function () {
+                node.status({fill: "yellow", shape: "dot", text: "connecting"});
+            });
+            node.connection.on('connected', function () {
+                node.status({fill: "green", shape: "dot", text: "connected"});
+            });
+            node.connection.on('disconnected', function () {
+                node.status({fill: "red", shape: "dot", text: "disconnected"});
+            });
         });
     }
 

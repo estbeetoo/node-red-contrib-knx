@@ -134,7 +134,7 @@ module.exports = function (RED) {
         }
 
         function nodeStatusConnecting() {
-            node.status({fill: "red", shape: "dot", text: "connecting"});
+            node.status({fill: "green", shape: "ring", text: "connecting"});
         }
 
         /**
@@ -267,15 +267,15 @@ module.exports = function (RED) {
         });
 
         function nodeStatusConnecting() {
-            node.status({fill: "yellow", shape: "dot", text: "connecting"});
+            node.status({fill: "green", shape: "ring", text: "connecting"});
         }
 
         function nodeStatusConnected() {
-            node.status({fill: "yellow", shape: "dot", text: "connected"});
+            node.status({fill: "green", shape: "dot", text: "connected"});
         }
 
         function nodeStatusDisconnected() {
-            node.status({fill: "yellow", shape: "dot", text: "disconnected"});
+            node.status({fill: "red", shape: "dot", text: "disconnected"});
         }
 
         node.receiveEvent = function (gad, data, datagram) {

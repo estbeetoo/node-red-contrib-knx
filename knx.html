@@ -105,12 +105,13 @@
     RED.nodes.registerType('knx-controller', {
         category: 'config',
         defaults: {
+            name: {value: ""},
             host: {value: "127.0.0.1", required: true},
             port: {value: 3761, required: true, validate: RED.validators.number()},
             mode: {value: "tunnel/unicast", required: true}
         },
         label: function () {
-            return "knx@" + this.host + ":" + this.port;
+            return (this.name || 'knx' ) + "@" + this.host + ":" + this.port;
         }
     });
 </script>

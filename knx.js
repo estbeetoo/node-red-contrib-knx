@@ -2,24 +2,11 @@
  * Created by aborovsky on 27.08.2015.
  */
 
-var KnxConnectionTunneling = require('knx.js').KnxConnectionTunneling;
-
-function timestamp() {
-    return new Date().
-        toISOString().
-        replace(/T/, ' ').      // replace T with a space
-        replace(/\..+/, '')
-}
-function log(msg, args) {
-    if (args)
-        console.log(timestamp() + ': ' + msg, args);
-    else
-        console.log(timestamp() + ': ' + msg);
-}
+var util = require('util'),
+    KnxConnectionTunneling = require('knx.js').KnxConnectionTunneling;
 
 module.exports = function (RED) {
 
-    log("loading knx.js for node-red");
     var knxjs = require('knx.js');
 
     /**
@@ -29,13 +16,14 @@ module.exports = function (RED) {
      * =======================================
      */
     function KnxControllerNode(config) {
-        log("new KnxControllerNode, config: %j", config);
         RED.nodes.createNode(this, config);
+        this.name = config.name;
         this.host = config.host;
         this.port = config.port;
         this.mode = config.mode;
         this.knxjsconn = null;
         var node = this;
+        node.log("new KnxControllerNode, config: " + util.inspect(config));
 
         /**
          * Initialize an knxjs socket, calling the handler function
@@ -43,12 +31,12 @@ module.exports = function (RED) {
          */
         this.initializeKnxConnection = function (handler) {
             if (node.knxjsconn) {
-                log('already connected to knxjs server at ' + config.host + ':' + config.port + ' in mode[' + config.mode + ']');
+                node.log('already connected to knxjs server at ' + config.host + ':' + config.port + ' in mode[' + config.mode + ']');
                 if (handler && (typeof handler === 'function'))
                     handler(node.knxjsconn);
                 return node.knxjsconn;
             }
-            log('connecting to knxjs server at ' + config.host + ':' + config.port + ' in mode[' + config.mode + ']');
+            node.log('connecting to knxjs server at ' + config.host + ':' + config.port + ' in mode[' + config.mode + ']');
             node.knxjsconn = null;
             if (config.mode === 'tunnel/unicast') {
                 node.knxjsconn = new KnxConnectionTunneling(config.host, config.port, '0.0.0.0', 0);
@@ -56,10 +44,10 @@ module.exports = function (RED) {
                         if (handler && (typeof handler === 'function'))
                             handler(node.knxjsconn);
                         if (err) {
-                            log('connecting to knxjs server at ' + config.host + ':' + config.port + ' in mode[' + config.mode + ']');
+                            node.warn('cannot connecting to knxjs server at ' + config.host + ':' + config.port + ' in mode[' + config.mode + '], cause: ' + util.inspect(err));
                             return null;
                         }
-                        log('Knx: successfully connected to ' + config.host + ':' + config.port + ' in mode[' + config.mode + ']');
+                        node.log('Knx: successfully connected to ' + config.host + ':' + config.port + ' in mode[' + config.mode + ']');
                     }
                 );
             }
@@ -68,7 +56,7 @@ module.exports = function (RED) {
             return node.knxjsconn;
         };
         this.on("close", function () {
-            log('disconnecting from knxjs server at ' + config.host + ':' + config.port + ' in mode[' + config.mode + ']');
+            node.log('disconnecting from knxjs server at ' + config.host + ':' + config.port + ' in mode[' + config.mode + ']');
             node.knxjsconn && node.knxjsconn.Disconnect && node.knxjsconn.Disconnect();
         });
     }
@@ -82,14 +70,13 @@ module.exports = function (RED) {
      * =======================================
      */
     function KnxOut(config) {
-        log('new Knx-OUT, config: %j', config);
         RED.nodes.createNode(this, config);
         this.name = config.name;
         this.ctrl = RED.nodes.getNode(config.controller);
         var node = this;
-        //
+        node.log('new Knx-OUT, config: ' + util.inspect(config));
         this.on("input", function (msg) {
-            log('knxout.onInput, msg=%j', msg);
+            node.log('knxout.onInput, msg[' + util.inspect(msg) + ']');
             if (!(msg && msg.hasOwnProperty('payload'))) return;
             var payload;
             if (typeof(msg.payload) === "object") {
@@ -98,7 +85,7 @@ module.exports = function (RED) {
                 payload = JSON.parse(msg.payload);
             }
             if (payload == null) {
-                log('knxout.onInput: illegal msg.payload!');
+                node.log('knxout.onInput: illegal msg.payload!');
                 return;
             }
             var action;
@@ -114,13 +101,13 @@ module.exports = function (RED) {
             }
             this.groupAddrSend(payload.dstgad, payload.value, payload.dpt, action, function (err) {
                 if (err) {
-                    log('groupAddrSend error: %j', err);
+                    node.error('groupAddrSend error: ' + util.inspect(err));
                 }
             });
 
         });
         this.on("close", function () {
-            log('knxOut.close');
+            node.log('knxOut.close');
         });
 
         node.status({fill: "yellow", shape: "dot", text: "inactive"});
@@ -183,7 +170,7 @@ module.exports = function (RED) {
             dpt = dpt.toString();
             if (action !== 'write')
                 throw 'Unsupported action[' + action + '] inside of groupAddrSend';
-            log('groupAddrSend action[' + action + '] dstgad:' + dstgad + ', value:' + value + ', dpt:' + dpt);
+            node.log('groupAddrSend action[' + action + '] dstgad:' + dstgad + ', value:' + value + ', dpt:' + dpt);
             switch (dpt) {
                 case '1': //Switch
                     value = (value.toString() === 'true' || value.toString() === '1')
@@ -224,12 +211,12 @@ module.exports = function (RED) {
                 connection.on('disconnected', nodeStatusDisconnected);
 
                 try {
-                    log("sendAPDU: %j", JSON.stringify(value));
+                    node.log("sendAPDU: " + util.inspect(value));
                     connection.Action(dstgad.toString(), value, dpt);
                     callback && callback();
                 }
                 catch (err) {
-                    log('error calling groupAddrSend!: %j', err);
+                    node.error('error calling groupAddrSend: ' + err);
                     callback(err);
                 }
             });
@@ -246,11 +233,11 @@ module.exports = function (RED) {
      * =======================================
      */
     function KnxIn(config) {
-        log('new KNX-IN, config: %j', config);
         RED.nodes.createNode(this, config);
         this.name = config.name;
         this.connection = null;
         var node = this;
+        node.log('new KNX-IN, config: ' + util.inspect(config));
         var knxjsController = RED.nodes.getNode(config.controller);
         /* ===== Node-Red events ===== */
         this.on("input", function (msg) {

@@ -23,7 +23,7 @@ module.exports = function (RED) {
         this.mode = config.mode;
         this.knxjsconn = null;
         var node = this;
-        node.log("new KnxControllerNode, config: " + util.inspect(config));
+        //node.log("new KnxControllerNode, config: " + util.inspect(config));
 
         /**
          * Initialize an knxjs socket, calling the handler function
@@ -41,10 +41,10 @@ module.exports = function (RED) {
             if (config.mode === 'tunnel/unicast') {
                 node.knxjsconn = new KnxConnectionTunneling(config.host, config.port, '0.0.0.0', 0);
                 node.knxjsconn.Connect(function (err) {
-                        if (handler && (typeof handler === 'function'))
+                        if (!err && handler && (typeof handler === 'function'))
                             handler(node.knxjsconn);
                         if (err) {
-                            node.warn('cannot connecting to knxjs server at ' + config.host + ':' + config.port + ' in mode[' + config.mode + '], cause: ' + util.inspect(err));
+                            //node.warn('cannot connecting to knxjs server at ' + config.host + ':' + config.port + ' in mode[' + config.mode + '], cause: ' + util.inspect(err));
                             return null;
                         }
                         node.log('Knx: successfully connected to ' + config.host + ':' + config.port + ' in mode[' + config.mode + ']');
@@ -74,7 +74,7 @@ module.exports = function (RED) {
         this.name = config.name;
         this.ctrl = RED.nodes.getNode(config.controller);
         var node = this;
-        node.log('new Knx-OUT, config: ' + util.inspect(config));
+        //node.log('new Knx-OUT, config: ' + util.inspect(config));
         this.on("input", function (msg) {
             node.log('knxout.onInput, msg[' + util.inspect(msg) + ']');
             if (!(msg && msg.hasOwnProperty('payload'))) return;
@@ -237,7 +237,7 @@ module.exports = function (RED) {
         this.name = config.name;
         this.connection = null;
         var node = this;
-        node.log('new KNX-IN, config: ' + util.inspect(config));
+        //node.log('new KNX-IN, config: ' + util.inspect(config));
         var knxjsController = RED.nodes.getNode(config.controller);
         /* ===== Node-Red events ===== */
         this.on("input", function (msg) {

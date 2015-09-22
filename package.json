@@ -27,6 +27,6 @@
   },
   "homepage": "https://github.com/estbeetoo/node-red-contrib-knx#readme",
   "dependencies": {
-    "knx.js": "^0.4.0"
+    "knx.js": "^0.5.0"
   }
 }

@@ -26,6 +26,10 @@
 -->
 <script type="text/x-red" data-template-name="knx-controller">
     <div class="form-row">
+        <label for="node-config-input-name"><i class="icon-tag"></i> Name</label>
+        <input type="text" id="node-config-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
         <label for="node-config-input-host"><i class="icon-bookmark"></i> knx Host</label>
         <input type="text" id="node-config-input-host">
     </div>
@@ -60,12 +64,10 @@
         <label for="node-input-name"><i class="icon-tag"></i> Name</label>
         <input type="text" id="node-input-name" placeholder="Name">
     </div>
-    	<div class="form-row">
+   	<div class="form-row">
         <label for="node-input-controller"><i class="icon-bookmark"></i> Controller</label>
         <input type="text" id="node-input-controller">
     </div>
-
-
 </script>
 
 <script type="text/x-red" data-help-name="knx-out">

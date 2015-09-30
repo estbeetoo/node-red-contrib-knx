@@ -19,6 +19,7 @@ module.exports = function (RED) {
         RED.nodes.createNode(this, config);
         this.name = config.name;
         this.host = config.host;
+        config.port = parseInt(config.port);
         this.port = config.port;
         this.mode = config.mode;
         this.knxjsconn = null;
@@ -197,8 +198,8 @@ module.exports = function (RED) {
             if (!this.ctrl)
                 node.error('Cannot proceed groupAddrSend, cause not controller-node specified!');
             else
-                // init a new one-off connection from the effectively singleton KnxController
-                // there seems to be no way to reuse the outgoing conn in adreek/node-knxjs
+            // init a new one-off connection from the effectively singleton KnxController
+            // there seems to be no way to reuse the outgoing conn in adreek/node-knxjs
                 this.ctrl.initializeKnxConnection(function (connection) {
 
                     if (connection.connected)

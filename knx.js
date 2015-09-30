@@ -194,32 +194,34 @@ module.exports = function (RED) {
 
             }
 
+            if (!this.ctrl)
+                node.error('Cannot proceed groupAddrSend, cause not controller-node specified!');
+            else
+                // init a new one-off connection from the effectively singleton KnxController
+                // there seems to be no way to reuse the outgoing conn in adreek/node-knxjs
+                this.ctrl.initializeKnxConnection(function (connection) {
 
-            // init a new one-off connection from the effectively singleton KnxController
-            // there seems to be no way to reuse the outgoing conn in adreek/node-knxjs
-            this.ctrl.initializeKnxConnection(function (connection) {
+                    if (connection.connected)
+                        nodeStatusConnected();
+                    else
+                        nodeStatusDisconnected();
+                    connection.removeListener('connecting', nodeStatusConnecting);
+                    connection.on('connecting', nodeStatusConnecting);
+                    connection.removeListener('connected', nodeStatusConnected);
+                    connection.on('connected', nodeStatusConnected);
+                    connection.removeListener('disconnected', nodeStatusDisconnected);
+                    connection.on('disconnected', nodeStatusDisconnected);
 
-                if (connection.connected)
-                    nodeStatusConnected();
-                else
-                    nodeStatusDisconnected();
-                connection.removeListener('connecting', nodeStatusConnecting);
-                connection.on('connecting', nodeStatusConnecting);
-                connection.removeListener('connected', nodeStatusConnected);
-                connection.on('connected', nodeStatusConnected);
-                connection.removeListener('disconnected', nodeStatusDisconnected);
-                connection.on('disconnected', nodeStatusDisconnected);
-
-                try {
-                    node.log("sendAPDU: " + util.inspect(value));
-                    connection.Action(dstgad.toString(), value, dpt);
-                    callback && callback();
-                }
-                catch (err) {
-                    node.error('error calling groupAddrSend: ' + err);
-                    callback(err);
-                }
-            });
+                    try {
+                        node.log("sendAPDU: " + util.inspect(value));
+                        connection.Action(dstgad.toString(), value, dpt);
+                        callback && callback();
+                    }
+                    catch (err) {
+                        node.error('error calling groupAddrSend: ' + err);
+                        callback(err);
+                    }
+                });
         }
     }
 
@@ -297,7 +299,7 @@ module.exports = function (RED) {
         /* ===== knxjs events ===== */
         // initialize incoming KNX event socket (openGroupSocket)
         // there's only one connection for knxjs-in:
-        knxjsController.initializeKnxConnection(function (connection) {
+        knxjsController && knxjsController.initializeKnxConnection(function (connection) {
             node.connection = connection;
             node.connection.removeListener('event', node.receiveEvent);
             node.connection.on('event', node.receiveEvent);

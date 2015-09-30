@@ -266,7 +266,7 @@ module.exports = function (RED) {
         }
 
         node.receiveEvent = function (gad, data, datagram) {
-            log('knx event gad[' + gad + ']data[' + data.toString('hex') + ']');
+            node.log('knx event gad[' + gad + ']data[' + data.toString('hex') + ']');
             node.send({
                 topic: 'knx:event',
                 payload: {
@@ -279,7 +279,7 @@ module.exports = function (RED) {
             });
         };
         node.receiveStatus = function (gad, data, datagram) {
-            log('knx status gad[' + gad + ']data[' + data.toString('hex') + ']');
+            node.log('knx status gad[' + gad + ']data[' + data.toString('hex') + ']');
             node.send({
                 topic: 'knx:status',
                 payload: {

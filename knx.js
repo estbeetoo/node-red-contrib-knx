@@ -45,7 +45,7 @@ module.exports = function (RED) {
                         if (!err && handler && (typeof handler === 'function'))
                             handler(node.knxjsconn);
                         if (err) {
-                            //node.warn('cannot connecting to knxjs server at ' + config.host + ':' + config.port + ' in mode[' + config.mode + '], cause: ' + util.inspect(err));
+                            node.warn('cannot connecting to knxjs server at ' + config.host + ':' + config.port + ' in mode[' + config.mode + '], cause: ' + util.inspect(err));
                             return null;
                         }
                         node.log('Knx: successfully connected to ' + config.host + ':' + config.port + ' in mode[' + config.mode + ']');

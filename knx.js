@@ -42,13 +42,11 @@ module.exports = function (RED) {
             if (config.mode === 'tunnel/unicast') {
                 node.knxjsconn = new KnxConnectionTunneling(config.host, config.port, '0.0.0.0', 0);
                 node.knxjsconn.Connect(function (err) {
-                        if (!err && handler && (typeof handler === 'function'))
-                            handler(node.knxjsconn);
-                        if (err) {
+                        if (err)
                             node.warn('cannot connecting to knxjs server at ' + config.host + ':' + config.port + ' in mode[' + config.mode + '], cause: ' + util.inspect(err));
-                            return null;
-                        }
-                        node.log('Knx: successfully connected to ' + config.host + ':' + config.port + ' in mode[' + config.mode + ']');
+                        else
+                            node.log('Knx: successfully connected to ' + config.host + ':' + config.port + ' in mode[' + config.mode + ']');
+                        handler(node.knxjsconn);
                     }
                 );
             }
@@ -196,7 +194,7 @@ module.exports = function (RED) {
             }
 
             if (!this.ctrl)
-                node.error('Cannot proceed groupAddrSend, cause not controller-node specified!');
+                node.error('Cannot proceed groupAddrSend, cause no controller-node specified!');
             else
             // init a new one-off connection from the effectively singleton KnxController
             // there seems to be no way to reuse the outgoing conn in adreek/node-knxjs

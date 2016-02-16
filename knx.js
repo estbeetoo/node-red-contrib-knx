@@ -43,7 +43,7 @@ module.exports = function (RED) {
                 node.knxjsconn = new KnxConnectionTunneling(config.host, config.port, '0.0.0.0', 0);
                 node.knxjsconn.Connect(function (err) {
                         if (err)
-                            node.warn('cannot connecting to knxjs server at ' + config.host + ':' + config.port + ' in mode[' + config.mode + '], cause: ' + util.inspect(err));
+                            node.warn('cannot connect to knxjs server at ' + config.host + ':' + config.port + ' in mode[' + config.mode + '], cause: ' + util.inspect(err));
                         else
                             node.log('Knx: successfully connected to ' + config.host + ':' + config.port + ' in mode[' + config.mode + ']');
                         handler(node.knxjsconn);

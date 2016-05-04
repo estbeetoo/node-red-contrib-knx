@@ -213,7 +213,7 @@ module.exports = function (RED) {
 
                     try {
                         node.log("sendAPDU: " + util.inspect(value));
-                        connection.Action(dstgad.toString(), value, dpt);
+                        connection.Action(dstgad.toString(), value, null);
                         callback && callback();
                     }
                     catch (err) {

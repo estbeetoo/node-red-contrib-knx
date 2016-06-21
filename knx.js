@@ -166,7 +166,7 @@ module.exports = function (RED) {
          *
          */
         this.groupAddrSend = function (dstgad, value, dpt, action, callback) {
-            dpt = dpt.toString();
+            dpt = dpt ? dpt.toString(): '1';
             if (action !== 'write')
                 throw 'Unsupported action[' + action + '] inside of groupAddrSend';
             node.log('groupAddrSend action[' + action + '] dstgad:' + dstgad + ', value:' + value + ', dpt:' + dpt);

@@ -98,6 +98,8 @@ module.exports = function (RED) {
                 default:
                     action = 'write';
             }
+            if (payload.value == null)
+            	action = 'read';
             this.groupAddrSend(payload.dstgad, payload.value, payload.dpt, action, function (err) {
                 if (err) {
                     node.error('groupAddrSend error: ' + util.inspect(err));
@@ -167,10 +169,11 @@ module.exports = function (RED) {
          */
         this.groupAddrSend = function (dstgad, value, dpt, action, callback) {
             dpt = dpt ? dpt.toString(): '1';
-            if (action !== 'write')
+            if (action !== 'write' && action!== 'read')
                 throw 'Unsupported action[' + action + '] inside of groupAddrSend';
             node.log('groupAddrSend action[' + action + '] dstgad:' + dstgad + ', value:' + value + ', dpt:' + dpt);
-            switch (dpt) {
+            if (action === 'write') {
+            	switch (dpt) {
                 case '1': //Switch
                     value = (value.toString() === 'true' || value.toString() === '1')
                     break;
@@ -190,7 +193,7 @@ module.exports = function (RED) {
                     break;
                 default:
                     throw 'Unsupported dpt[' + dpt + '] inside groupAddrSend of knx node'
-
+                }
             }
 
             if (!this.ctrl)
@@ -213,7 +216,10 @@ module.exports = function (RED) {
 
                     try {
                         node.log("sendAPDU: " + util.inspect(value));
-                        connection.Action(dstgad.toString(), value, null);
+                        if (action === 'read')
+                        	connection.RequestStatus(dstgad.toString());
+                        else if (action === 'write')
+                        	connection.Action(dstgad.toString(), value, null);
                         callback && callback();
                     }
                     catch (err) {

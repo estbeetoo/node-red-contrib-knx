@@ -87,6 +87,10 @@ module.exports = function (RED) {
                 node.log('knxout.onInput: illegal msg.payload!');
                 return;
             }
+            if (payload.dstgad == null) {
+            	node.log('knxout.onInput: illegal msg.payload.dstgad!');
+                return;
+            }
             var action;
             switch (true) {
                 case /read/.test(msg.topic):

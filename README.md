@@ -10,7 +10,7 @@ Uses the pure JavaScript implementation of eib/knx driver for Node.JS (https://g
 
 ## Requirements
 
-1. Node.js v4.0.0 and above
+1. Node.js v4.5.0 and above
 2. Node-RED v0.12.0 and above
 
 ## Install via NPM

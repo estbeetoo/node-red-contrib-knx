@@ -8,6 +8,11 @@ Inspired by https://github.com/ekarak/node-red-contrib-eibd.
 KNX for node-red, utilizing pure JavaScript KNXnet/IP driver (working in tunneling mode).
 Uses the pure JavaScript implementation of eib/knx driver for Node.JS (https://github.com/estbeetoo/knx.js). 
 
+## Requirements
+
+1. Node.js v4.5.0 and above
+2. Node-RED v0.12.0 and above
+
 ## Install via NPM
 
 From inside your node-red directory:

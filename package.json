@@ -1,6 +1,6 @@
 {
   "name": "node-red-contrib-knx",
-  "version": "0.7.7",
+  "version": "0.8.0",
   "description": "KNX for node-red, utilizing pure JavaScript KNXnet/IP driver (both works: tunelling & routing)",
   "main": "knx.js",
   "scripts": {
@@ -27,6 +27,6 @@
   },
   "homepage": "https://github.com/estbeetoo/node-red-contrib-knx#readme",
   "dependencies": {
-    "knx.js": "^0.6.0"
+    "knx.js": "^0.7.0"
   }
 }

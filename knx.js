@@ -183,6 +183,9 @@ module.exports = function (RED) {
                     break;
                 case '9': //Floating point
                     value = parseFloat(value);
+                    buf = new Buffer(4);
+                    buf.writeFloatLE(value, 0);
+                    value = buf;
                     break;
                 case '5':    //8-bit unsigned value               1 Byte                  EIS 6         DPT 5    0...255
                 case '5.001':    //8-bit unsigned value               1 Byte                  DPT 5.001    DPT 5.001    0...100
@@ -194,6 +197,17 @@ module.exports = function (RED) {
                 case '17':   //Scene                              1 Byte                  DPT 17        DPT 17    0...63
                 case '20':   //HVAC                               1 Byte                  DPT 20        DPT 20    0..255
                     value = parseInt(value);
+                    buf = new Buffer(2);
+                    if (data <= 255) {
+                        buf[0] = 0x00;
+                        buf[1] = value & 255;
+                        value = buf;
+                    }
+                    else if (value <= 65535) {
+                        buf[0] = value & 255;
+                        buf[1] = (value >> 8) & 255;
+                        value = buf;
+                    }
                     break;
                 default:
                     throw 'Unsupported dpt[' + dpt + '] inside groupAddrSend of knx node'

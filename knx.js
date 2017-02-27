@@ -198,7 +198,7 @@ module.exports = function (RED) {
                 case '20':   //HVAC                               1 Byte                  DPT 20        DPT 20    0..255
                     value = parseInt(value);
                     buf = new Buffer(2);
-                    if (data <= 255) {
+                    if (value <= 255) {
                         buf[0] = 0x00;
                         buf[1] = value & 255;
                         value = buf;

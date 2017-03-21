@@ -182,8 +182,8 @@ module.exports = function (RED) {
                     value = (value.toString() === 'true' || value.toString() === '1')
                     break;
                 case '3': // Dimmer, control bit + 3 bit value
-                    if (!(value.step && typeof(value.step) == 'boolean')) {
-                      throw 'Value step type needs to be boolean or 0/1';
+                    if (!(value.step)) {
+                      throw 'Value step missing';
                     } else if (value.amount <= 7) {
                       value = ((value.step.toString() === 'true' || value.step.toString() === '1') << 4) |
                         parseInt(value.amount) & 7;

@@ -182,10 +182,10 @@ module.exports = function (RED) {
                     value = (value.toString() === 'true' || value.toString() === '1')
                     break;
                 case '3': // Dimmer, control bit + 3 bit value
-                    if (!(value.step)) {
-                      throw 'Value step missing';
+                    if (!(value.c)) {
+                      throw 'Value up/down control missing';
                     } else if (value.amount <= 7) {
-                      value = ((value.step.toString() === 'true' || value.step.toString() === '1') << 4) |
+                      value = ((value.c.toString() === 'true' || value.c.toString() === '1') << 4) |
                         parseInt(value.amount) & 7;
                       buf = new Buffer(1);
                       buf[0] = value & 8;

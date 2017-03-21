@@ -181,6 +181,19 @@ module.exports = function (RED) {
                 case '1': //Switch
                     value = (value.toString() === 'true' || value.toString() === '1')
                     break;
+                case '3': // Dimmer, control bit + 3 bit value
+                    if (!(value.step && typeof(value.step) == 'boolean')) {
+                      throw 'Value step type needs to be boolean or 0/1';
+                    } else if (value.amount <= 7) {
+                      value = ((value.step.toString() === 'true' || value.step.toString() === '1') << 4) |
+                        parseInt(value.amount) & 7;
+                      buf = new Buffer(1);
+                      buf[0] = value & 8;
+                      value = buf;
+                    } else {
+                      throw 'Value step amount too big for DPT 3';
+                    }
+                    break;
                 case '9': //Floating point
                     value = parseFloat(value);
                     buf = new Buffer(4);

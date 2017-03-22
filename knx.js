@@ -182,13 +182,13 @@ module.exports = function (RED) {
                     value = (value.toString() === 'true' || value.toString() === '1')
                     break;
                 case '3': // Dimmer, control bit + 3 bit value
-                    if (!(value.c)) {
+                    if (typeof(value.c)==='undefined') {
                       throw 'Value up/down control missing';
                     } else if (value.amount <= 7) {
-                      value = ((value.c.toString() === 'true' || value.c.toString() === '1') << 4) |
+                      value = ((value.c.toString() === 'true' || value.c.toString() === '1') << 3) |
                         parseInt(value.amount) & 7;
                       buf = new Buffer(1);
-                      buf[0] = value & 8;
+                      buf[0] = value & 15;
                       value = buf;
                     } else {
                       throw 'Value step amount too big for DPT 3';

@@ -182,16 +182,23 @@ module.exports = function (RED) {
                     value = (value.toString() === 'true' || value.toString() === '1')
                     break;
                 case '3': // Dimmer, control bit + 3 bit value
-                    if (typeof(value.c)==='undefined') {
-                      throw 'Value up/down control missing';
-                    } else if (value.amount <= 7) {
-                      value = ((value.c.toString() === 'true' || value.c.toString() === '1') << 3) |
-                        parseInt(value.amount) & 7;
+                    if (typeof(value.c) !== 'undefined' && value.c !== null &&
+                    typeof(value.amount) !== 'undefined' && value.amount !== null) {
+                      if (value.amount <= 7) {
+                        value = ((value.c.toString() === 'true' || value.c.toString() === '1') << 3) |
+                          parseInt(value.amount) & 7;
+                        buf = new Buffer(1);
+                        buf[0] = value & 15;
+                        value = buf;
+                      } else {
+                        throw 'Value step amount too big for DPT 3';
+                      }
+                    } else if (!isNaN(parseInt(value))) {
                       buf = new Buffer(1);
-                      buf[0] = value & 15;
+                      buf[0] = parseInt(value) & 15;
                       value = buf;
-                    } else {
-                      throw 'Value step amount too big for DPT 3';
+                    } else if (!Buffer.isBuffer(value)) {
+                      throw 'Value is incorrect for DPT 3 (type of value should be Buffer or Value = 0..15 or Object with fields "value.c" = 0..1 and "value.amount" = 0..7)';
                     }
                     break;
                 case '9': //Floating point

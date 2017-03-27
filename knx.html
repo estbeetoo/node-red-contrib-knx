@@ -74,14 +74,14 @@
     <p>Use this to <b>send</b> KNX telegrams to a KNX/EIB network.<br/>
     	<b>msg.topic</b> can be:
     	<p> - 'read': to send a read request to the bus</p>
-    	<p> - respond': to send a response to another read request to the bus</p>
+    	<p> - 'respond': to send a response to another read request to the bus</p>
     	<p> - 'write': (<b>default</b>) to write a value to the bus. Can be omitted.</p>
     	<br/>
     	<b>msg.payload</b> must be a JavaScript object or a string in JSON format
-    	<p> - dstgad: the destination <b>group</b> address (eg."1/2/3")</p>
-    	<p> - value: the actual value to send (eg."1")</p>
-    	<p> - dpt: the datapoint type (eg."1")</p>
-	for example: {"dstgad":"1/2/3", "value":"1", "dpt":"1"}
+    	<p> - 'dstgad': the destination <b>group</b> address (eg."1/2/3")</p>
+    	<p> - 'value': the actual value to send (eg."1"), for datapoint 3 this must be an object with attribute c = a boolean for an up increment, and attribute amount = value <=7 to increment by.</p>
+    	<p> - 'dpt': the datapoint type (eg."1")</p>
+	for example: {"dstgad":"1/2/3", "value":"1", "dpt":"1"} or {"dstgad":"3/2/2", "value":{"c":"true","amount":"4"},"dpt":"3"}
     </p>
 
 
@@ -89,7 +89,7 @@
 
 <script type="text/x-red" data-help-name="knx-in">
     <p>Use this to <b>inject</b> flows from KNX telegrams on the bus<br/>
-   	<b>msg.topic</b> will be: 
+   	<b>msg.topic</b> will be:
     	<p> - 'read': when a read request arrives on the bus</p>
     	<p> - 'respond': when another KNX device responds to a read request on the bus</p>
     	<p> - 'write': when somebody writes a value to a KNX group address.</p>

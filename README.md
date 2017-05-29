@@ -36,7 +36,7 @@ Both use the same message format, an example message follows:
    "payload":{  
       "srcphy":"1.1.100",
       "dstgad":"5/0/2",
-      "dpt":"DPT1",
+      "dpt":"1",
       "value":0
    }
 }

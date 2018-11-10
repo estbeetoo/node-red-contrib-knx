@@ -147,7 +147,7 @@ module.exports = function (RED) {
          KNX/EIB Function                   Information length      EIS         DPT     Value
          Switch                             1 Bit                   EIS 1       DPT 1    0,1
          Dimming (Position, Control, Value) 1 Bit, 4 Bit, 8 Bit     EIS 2        DPT 3    [0,0]...[1,7]
-         Time                               3 Byte                  EIS 3        DPT 10
+         Time                               3 Byte                  EIS 3       DPT 10    Day [0..7] Hours [0..23] Minutes [0..59] Seconds [0..59]
          Date                               3 Byte                  EIS 4       DPT 11
          Floating point                     2 Byte                  EIS 5        DPT 9    -671088,64 - 670760,96
          8-bit unsigned value               1 Byte                  EIS 6        DPT 5    0...255
@@ -212,6 +212,46 @@ module.exports = function (RED) {
                 case '6':    //8-bit signed value                 1 Byte                  EIS 14        DPT 6    -128...127
                 case '7':    //16-bit unsigned value              2 Byte                  EIS 10        DPT 7    0...65535
                 case '8':    //16-bit signed value                2 Byte                  DPT 8         DPT 8    -32768...32767
+                case '10':   //Time                               3 Byte                  EIS 3         DPT 10    Day [0..7] Hour [0..23] Minutes [0..59] Seconds [0..59]
+                    var day = 0;
+                    var hours = 0;
+                    var minutes = 0;
+                    var seconds = 0;
+
+                    // Get values from object or parse from input value as wire format
+                    if (typeof(value.day) !== 'undefined' &&
+                    typeof(value.hours) !== 'undefined' &&
+                    typeof(value.minutes) !== 'undefined' &&
+                    typeof(value.seconds) !== 'undefined') {
+                        day = value.day;
+                        hours = value.hours;
+                        minutes = value.minutes;
+                        seconds = value.seconds;
+                    } else {
+                        value = parseInt(value);
+                        // Day 3 bit [0..7]
+                        day = (value >> 21) & 0x07
+                        // Hour 5 bit [0..23]
+                        hours = (value >> 16) & 0x1F
+                        // Minutes 6 bit [0..59]
+                        minutes = (value >> 8) & 0x3F;
+                        // Seconds 6 bit [0..59]
+                        seconds = value & 0x3F;
+                    }
+
+                    // Limit to max. values
+                    hours = (hours <= 23) ? hours : 23;
+                    minutes = (minutes <= 59) ? minutes : 59;
+                    seconds = (seconds <= 59) ? seconds : 59;
+
+                    // Write 3 byte wire time format: | day, hour | minute | second |
+                    buf = new Buffer(3);
+                    buf[2] = seconds & 0x3F;
+                    buf[1] = minutes & 0x3F;
+                    buf[0] = ((day & 0x07) << 5) | hours & 0x1F;
+
+                    value = buf;
+                    break;
                 case '12':   //32-bit unsigned value              4 Byte                  EIS 11        DPT 12    0...4294967295
                 case '13':   //32-bit signed value                4 Byte                  DPT 13        DPT 13    -2147483648...2147483647
                 case '17':   //Scene                              1 Byte                  DPT 17        DPT 17    0...63

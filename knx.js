@@ -214,6 +214,16 @@ module.exports = function (RED) {
                 case '8':    //16-bit signed value                2 Byte                  DPT 8         DPT 8    -32768...32767
                 case '12':   //32-bit unsigned value              4 Byte                  EIS 11        DPT 12    0...4294967295
                 case '13':   //32-bit signed value                4 Byte                  DPT 13        DPT 13    -2147483648...2147483647
+                case '16':   //String                            14 Byte                  DPT 16        DPT 16    ASCII or ISO 8859-1/Latin-1
+                    buf = Buffer.alloc(14, 0);
+                    // Limit length to 14 byte
+                    if (value.length > 14) {
+                        value = value.substr(0,14);
+                    }
+                    // Write object value into buffer
+                    buf.fill(value, 0, value.length, 'ascii')
+                    value = buf;
+                    break;
                 case '17':   //Scene                              1 Byte                  DPT 17        DPT 17    0...63
                 case '20':   //HVAC                               1 Byte                  DPT 20        DPT 20    0..255
                     value = parseInt(value);

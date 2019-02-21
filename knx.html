@@ -82,9 +82,23 @@
     	<p> - 'value': the actual value to send (eg."1"), for datapoint 3 this must be an object with attribute c = a boolean for an up increment, and attribute amount = value <=7 to increment by.</p>
     	<p> - 'dpt': the datapoint type (eg."1")</p>
     	<br/>
-    	<p>for example: {"dstgad":"1/2/3", "value":"1", "dpt":"1"}</p>
-    	<p>for DPT3 correct message:  {"dstgad":"3/2/2", "value":{"c":"true", "amount":"4"}, "dpt":"3"} ("c" - "true"/"false" or "1"/"0", "amount" - "0".."7" or <br/>
-    		{"dstgad":"3/2/2", "value":"15", "dpt":"3"} ("value" - "0".."15")</p>
+      <p>Examples for DPT types</p>
+      <b>DPT 1 (Switch)</b>
+      <p>{"dstgad":"1/2/3", "value":"1", "dpt":"1"}</p>
+      <br/>
+      <b>DPT 3 (Dimming)</b>
+      <p>for DPT3 correct message:  {"dstgad":"3/2/2", "value":{"c":"true", "amount":"4"}, "dpt":"3"} ("c" - "true"/"false" or "1"/"0", "amount" - "0".."7" or <br/>
+          {"dstgad":"3/2/2", "value":"15", "dpt":"3"} ("value" - "0".."15")</p>
+      <br/>
+      <b>DPT 10 (Time)</b>
+      <p>Time definition via Timestamp value:<br/>
+          {"dstgad": "0/0/9", "value": 155077976400, "dpt": "10" }
+      </p>
+
+      <b>DPT 11 (Date)</b>
+      <p>Date definition via Timestamp value:<br/>
+          {"dstgad": "0/0/10", "value": 155077976400, "dpt": "11" }
+      </p>
     </p>
 
 

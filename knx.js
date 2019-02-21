@@ -207,7 +207,8 @@ module.exports = function (RED) {
                     buf.writeFloatLE(value, 0);
                     value = buf;
                     break;
-                case '10':   //3Byte fron timestamp
+                case '10':   //3Byte from timestamp -> NNNHHHHH 00MMMMMM 00SSSSSS where N day of week (0 no day, 1 Monday, 2 ...), H hours, M minutes, S seconds 
+                    value = parseInt(value);
                     value = parseInt(value);
                     date = new Date(value);
 
@@ -226,7 +227,7 @@ module.exports = function (RED) {
 
                     value = formattedTime;
                     break;
-                case '11':   //3Byte fron timestamp
+                case '11':   //3Byte from timestamp -> 000DDDDD 0000MMMM 0YYYYYYY where D day of month, M month, Y Years from 2000 (true from 2000 to 2089)
                     value = parseInt(value);
                     date = new Date(value);
 

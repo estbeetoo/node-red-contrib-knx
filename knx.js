@@ -292,7 +292,7 @@ module.exports = function (RED) {
                              date = new Date(value);
                              
                              day = date.getDate();
-                             month = date.getMonth();
+                             month = date.getMonth() + 1;
                              year = date.getFullYear() - 2000;
                         }
                     }

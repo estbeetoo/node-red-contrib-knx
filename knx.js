@@ -383,6 +383,7 @@ module.exports = function (RED) {
                     'dstgad': gad,
                     'dpt': 'no_dpt',
                     'value': data.toString(),
+                    'data': datagram.raw_data,
                     'type': 'status'
                 }
             });

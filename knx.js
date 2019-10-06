@@ -369,7 +369,8 @@ module.exports = function (RED) {
                     'dstgad': gad,
                     'dpt': 'no_dpt',
                     'value': data.toString(),
-                    'data': datagram.raw_data,
+                    'data': datagram.dptData.apdu,
+                    'dptData': datagram.dptData,
                     'type': 'event'
                 }
             });
@@ -383,7 +384,8 @@ module.exports = function (RED) {
                     'dstgad': gad,
                     'dpt': 'no_dpt',
                     'value': data.toString(),
-                    'data': datagram.raw_data,
+                    'data': datagram.dptData.apdu,
+                    'dptData': datagram.dptData,
                     'type': 'status'
                 }
             });

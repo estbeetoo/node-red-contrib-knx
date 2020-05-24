@@ -212,7 +212,19 @@ module.exports = function (RED) {
                 case '6':    //8-bit signed value                 1 Byte                  EIS 14        DPT 6    -128...127
                 case '7':    //16-bit unsigned value              2 Byte                  EIS 10        DPT 7    0...65535
                 case '8':    //16-bit signed value                2 Byte                  DPT 8         DPT 8    -32768...32767
-                case '10':   //Time                               3 Byte                  EIS 3         DPT 10    Day [0..7] Hour [0..23] Minutes [0..59] Seconds [0..59]
+                case '12':   //32-bit unsigned value              4 Byte                  EIS 11        DPT 12    0...4294967295
+                case '13':   //32-bit signed value                4 Byte                  DPT 13        DPT 13    -2147483648...2147483647
+                case '16':   //String                            14 Byte                  DPT 16        DPT 16    ASCII or ISO 8859-1/Latin-1
+                    buf = Buffer.alloc(14, 0);
+                    // Limit length to 14 byte
+                    if (value.length > 14) {
+                        value = value.substr(0,14);
+                    }
+                    // Write object value into buffer
+                    buf.fill(value, 0, value.length, 'ascii')
+                    value = buf;
+                    break;
+		case '10':   //Time                               3 Byte                  EIS 3         DPT 10    Day [0..7] Hour [0..23] Minutes [0..59] Seconds [0..59]
                     var day = 0;
                     var hours = 0;
                     var minutes = 0;
@@ -250,18 +262,6 @@ module.exports = function (RED) {
                     buf[1] = minutes & 0x3F;
                     buf[0] = ((day & 0x07) << 5) | hours & 0x1F;
 
-                    value = buf;
-                    break;
-                case '12':   //32-bit unsigned value              4 Byte                  EIS 11        DPT 12    0...4294967295
-                case '13':   //32-bit signed value                4 Byte                  DPT 13        DPT 13    -2147483648...2147483647
-                case '16':   //String                            14 Byte                  DPT 16        DPT 16    ASCII or ISO 8859-1/Latin-1
-                    buf = Buffer.alloc(14, 0);
-                    // Limit length to 14 byte
-                    if (value.length > 14) {
-                        value = value.substr(0,14);
-                    }
-                    // Write object value into buffer
-                    buf.fill(value, 0, value.length, 'ascii')
                     value = buf;
                     break;
                 case '17':   //Scene                              1 Byte                  DPT 17        DPT 17    0...63

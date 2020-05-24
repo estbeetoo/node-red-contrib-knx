@@ -98,6 +98,19 @@
         <p>As alternative the time can be provided in the 3-byte DPT10 wire format. Example value 15802659 specifies Sunday, 17:33:35.<br/>
             {"dstgad": "0/0/9", "value": 15802659, "dpt": "10" }
         </p>
+        <p>Also time can be provided via timestamp.<br/>
+            {"dstgad": "0/0/9", "value": 155078704501, "dpt": "10" }
+        </p>
+        <b>DPT 11 (Date)</b>
+        <p>Date definition via JSON object:<br/>
+            {"dstgad": "0/0/8", "value": { "day": 3, "month": 11, "year": 2020 }, "dpt": "11" }
+        </p>
+        <p>As alternative the date can be provided in the 3-byte DPT11 wire format<br/>
+            {"dstgad": "0/0/8", "value": 130516, "dpt": "11" }
+        </p>
+        <p>As alternative the date can be provided via timestamp.<br/>
+            {"dstgad": "0/0/8", "value": 155078704501, "dpt": "11" }
+        </p>
     </p>
 </script>
 

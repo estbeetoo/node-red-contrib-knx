@@ -71,11 +71,14 @@ module.exports = function (RED) {
     function KnxOut(config) {
         RED.nodes.createNode(this, config);
         this.name = config.name;
+        this.debug = config.debug;
         this.ctrl = RED.nodes.getNode(config.controller);
         var node = this;
         //node.log('new Knx-OUT, config: ' + util.inspect(config));
         this.on("input", function (msg) {
-            node.log('knxout.onInput, msg[' + util.inspect(msg) + ']');
+            if (node.debug) {
+                node.log('knxout.onInput, msg[' + util.inspect(msg) + ']');
+            }
             if (!(msg && msg.hasOwnProperty('payload'))) return;
             var payload;
             if (typeof(msg.payload) === "object") {
@@ -175,7 +178,9 @@ module.exports = function (RED) {
             dpt = dpt ? dpt.toString(): '1';
             if (action !== 'write' && action!== 'read')
                 throw 'Unsupported action[' + action + '] inside of groupAddrSend';
-            node.log('groupAddrSend action[' + action + '] dstgad:' + dstgad + ', value:' + value + ', dpt:' + dpt);
+            if (node.debug) {
+                node.log('groupAddrSend action[' + action + '] dstgad:' + dstgad + ', value:' + value + ', dpt:' + dpt);
+            }
             if (action === 'write') {
             	switch (dpt) {
                 case '1': //Switch
@@ -404,7 +409,9 @@ module.exports = function (RED) {
                     connection.on('disconnected', nodeStatusDisconnected);
 
                     try {
-                        node.log("sendAPDU: " + util.inspect(value));
+                        if (node.debug) {
+                            node.log("sendAPDU: " + util.inspect(value));
+                        }
                         if (action === 'read')
                         	connection.RequestStatus(dstgad.toString());
                         else if (action === 'write')
@@ -431,6 +438,7 @@ module.exports = function (RED) {
     function KnxIn(config) {
         RED.nodes.createNode(this, config);
         this.name = config.name;
+        this.debug = config.debug;
         this.connection = null;
         var node = this;
         //node.log('new KNX-IN, config: ' + util.inspect(config));
@@ -462,7 +470,9 @@ module.exports = function (RED) {
         }
 
         node.receiveEvent = function (gad, data, datagram) {
-            node.log('knx event gad[' + gad + ']data[' + data.toString('hex') + ']');
+            if (node.debug) {
+                node.log('knx event gad[' + gad + ']data[' + data.toString('hex') + ']');
+            }
             node.send({
                 topic: 'knx:event',
                 payload: {
@@ -477,7 +487,9 @@ module.exports = function (RED) {
             });
         };
         node.receiveStatus = function (gad, data, datagram) {
-            node.log('knx status gad[' + gad + ']data[' + data.toString('hex') + ']');
+            if (node.debug) {
+                node.log('knx status gad[' + gad + ']data[' + data.toString('hex') + ']');
+            }
             node.send({
                 topic: 'knx:status',
                 payload: {

@@ -3,7 +3,16 @@
  */
 
 var util = require('util'),
+    os = require('os'),
+    dgram = require('dgram'),
     KnxConnectionTunneling = require('knx.js').KnxConnectionTunneling;
+
+// Shared connection pool to avoid duplicate tunnels to the same endpoint
+// Keyed by `${mode}|${host}|${port}`
+var __knxShared = {};
+function getKey(cfg) {
+    return [cfg.mode, cfg.host, cfg.port].join('|');
+}
 
 module.exports = function (RED) {
 
@@ -23,6 +32,17 @@ module.exports = function (RED) {
         this.port = config.port;
         this.mode = config.mode;
         this.knxjsconn = null;
+        this.__key = getKey(config);
+        // ensure shared entry exists
+        if (!__knxShared[this.__key]) {
+            __knxShared[this.__key] = { conn: null, users: {}, connecting: false, waiters: [] };
+        }
+        // register this controller as a user of the shared connection
+        __knxShared[this.__key].users[this.id] = true;
+        // reuse existing shared connection if available
+        if (__knxShared[this.__key].conn) {
+            this.knxjsconn = __knxShared[this.__key].conn;
+        }
         var node = this;
         //node.log("new KnxControllerNode, config: " + util.inspect(config));
 
@@ -31,32 +51,129 @@ module.exports = function (RED) {
          * when successfully connected, passing it the knxjs connection
          */
         this.initializeKnxConnection = function (handler) {
+            var shared = __knxShared[node.__key];
+            // If we already have a connection instance, reuse it
             if (node.knxjsconn) {
                 node.log('already connected to knxjs server at ' + config.host + ':' + config.port + ' in mode[' + config.mode + ']');
                 if (handler && (typeof handler === 'function'))
                     handler(node.knxjsconn);
                 return node.knxjsconn;
             }
+            // If a shared connection is in progress or already created, attach and/or wait
+            if (shared && shared.conn) {
+                node.knxjsconn = shared.conn;
+                if (handler && (typeof handler === 'function')) handler(node.knxjsconn);
+                return node.knxjsconn;
+            }
+            if (shared && shared.connecting) {
+                if (handler && (typeof handler === 'function')) shared.waiters.push(handler);
+                return null;
+            }
             node.log('connecting to knxjs server at ' + config.host + ':' + config.port + ' in mode[' + config.mode + ']');
             node.knxjsconn = null;
             if (config.mode === 'tunnel/unicast') {
-                node.knxjsconn = new KnxConnectionTunneling(config.host, config.port, '0.0.0.0', 0);
-                node.knxjsconn.Connect(function (err) {
-                        if (err)
-                            node.warn('cannot connect to knxjs server at ' + config.host + ':' + config.port + ' in mode[' + config.mode + '], cause: ' + util.inspect(err));
-                        else
-                            node.log('Knx: successfully connected to ' + config.host + ':' + config.port + ' in mode[' + config.mode + ']');
-                        handler(node.knxjsconn);
+                // prevent races: mark connecting and queue handler if provided
+                if (shared) {
+                    shared.connecting = true;
+                    if (handler && (typeof handler === 'function')) shared.waiters.push(handler);
+                }
+
+                // Determine suitable local IPv4 used for outbound traffic
+                function pickLocalIPv4(remoteHost) {
+                    // Try UDP connect to infer route-local IP if supported
+                    try {
+                        var s = dgram.createSocket('udp4');
+                        if (typeof s.connect === 'function') {
+                            // Use KNX default port to route
+                            s.connect(config.port || 3671, remoteHost);
+                            var addr = s.address();
+                            s.close();
+                            if (addr && addr.address && addr.address !== '0.0.0.0') return addr.address;
+                        } else {
+                            s.close();
+                        }
+                    } catch (e) { /* ignore and fallback */ }
+                    // Fallback: pick first non-internal IPv4
+                    try {
+                        var ifs = os.networkInterfaces();
+                        for (var name in ifs) {
+                            if (!ifs.hasOwnProperty(name)) continue;
+                            var list = ifs[name] || [];
+                            for (var i = 0; i < list.length; i++) {
+                                var it = list[i];
+                                if (it && it.family === 'IPv4' && !it.internal) return it.address;
+                            }
+                        }
+                    } catch (e2) { /* ignore */ }
+                    return '0.0.0.0';
+                }
+
+                // Reserve an ephemeral UDP port so our advertised control port matches the bound socket
+                (function reservePortAndConnect() {
+                    var tmp = dgram.createSocket('udp4');
+                    tmp.once('error', function (e) {
+                        try { tmp.close(); } catch (_) {}
+                        // fallback to OS-assigned port 0 if reservation fails
+                        proceed(pickLocalIPv4(config.host), 0);
+                    });
+                    tmp.bind(0, function () {
+                        var local = tmp.address();
+                        var localIP = pickLocalIPv4(config.host);
+                        var localPort = (local && local.port) ? local.port : 0;
+                        try { tmp.close(); } catch (_) {}
+                        proceed(localIP, localPort);
+                    });
+                })();
+
+                function proceed(localIP, localPort) {
+                    try {
+                        node.knxjsconn = new KnxConnectionTunneling(config.host, config.port, localIP, localPort);
+                        if (shared) {
+                            shared.conn = node.knxjsconn;
+                        }
+                        node.knxjsconn.Connect(function (err) {
+                            if (shared) shared.connecting = false;
+                            if (err)
+                                node.warn('cannot connect to knxjs server at ' + config.host + ':' + config.port + ' in mode[' + config.mode + '], cause: ' + util.inspect(err));
+                            else
+                                node.log('Knx: successfully connected to ' + config.host + ':' + config.port + ' in mode[' + config.mode + ']');
+                            // notify direct handler if we didn't queue it above
+                            if (!shared && handler && (typeof handler === 'function')) handler(node.knxjsconn);
+                            // drain waiters that arrived while connecting
+                            if (shared && shared.waiters && shared.waiters.length) {
+                                var w = shared.waiters.slice(0);
+                                shared.waiters.length = 0;
+                                w.forEach(function (cb) {
+                                    try { cb(node.knxjsconn); } catch (e) { node.warn('waiter callback error: ' + e); }
+                                });
+                            }
+                        });
+                    } catch (e) {
+                        if (shared) shared.connecting = false;
+                        node.warn('error creating KNX tunneling connection: ' + e);
+                        if (handler && (typeof handler === 'function')) handler(null);
                     }
-                );
+                }
             }
             else
                 throw 'Unsupported mode[' + config.mode + ']'
             return node.knxjsconn;
         };
         this.on("close", function () {
-            node.log('disconnecting from knxjs server at ' + config.host + ':' + config.port + ' in mode[' + config.mode + ']');
-            node.knxjsconn && node.knxjsconn.Disconnect && node.knxjsconn.Disconnect();
+            // remove this user; only disconnect when last user goes away
+            var shared = __knxShared[node.__key];
+            if (shared && shared.users) {
+                delete shared.users[node.id];
+                var hasUsers = false;
+                for (var k in shared.users) { if (shared.users.hasOwnProperty(k)) { hasUsers = true; break; } }
+                if (!hasUsers) {
+                    node.log('disconnecting from knxjs server at ' + config.host + ':' + config.port + ' in mode[' + config.mode + ']');
+                    if (shared.conn && shared.conn.Disconnect) {
+                        try { shared.conn.Disconnect(); } catch (e) { node.warn('disconnect error: ' + e); }
+                    }
+                    delete __knxShared[node.__key];
+                }
+            }
         });
     }
 
